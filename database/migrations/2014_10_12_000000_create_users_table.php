@@ -16,10 +16,13 @@ return new class extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
+            $table->string('email')->nullable()->unique();
+            $table->string('phoneNumber')->nullable()->unique();
+            $table->string('registerBy')->nullable(); // The device through which the user registered.
             $table->string('password');
-            $table->rememberToken();
+            $table->unsignedTinyInteger('isActive')->default(0); //  0 = inactive  ,1 = active
+            $table->string('role')->default('client');
+            $table->longText('remember_token')->nullable();
             $table->timestamps();
         });
     }
