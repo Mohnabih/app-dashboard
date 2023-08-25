@@ -7,6 +7,7 @@ use App\Http\Controllers\AppBaseController;
 use App\Http\Requests\Api\Auth\LoginUserRequest;
 use App\Http\Requests\Api\Auth\StoreUserRequest;
 use App\Models\User;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 
 class AuthController extends AppBaseController
@@ -63,6 +64,14 @@ class AuthController extends AppBaseController
     {
         $input = $request->validated();
         $user = User::create($input);
+
+        if ($request->has('image') && $request->image != null) {
+            $user->media->each->delete();
+            $user->save();
+            $uuid = Str::uuid();
+            $user->addMediaFromRequest('image')->usingName($uuid)->usingFileName($uuid . '.' . $request->image->extension())->toMediaCollection('images');
+        }
+
 
         $token = auth()->login($user);
         $user->remember_token = $token;

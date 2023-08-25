@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Api\Auth\AuthController;
+use App\Http\Controllers\Api\Dashboard\v1\DashboardController;
+use App\Http\Controllers\Api\Note\v1\NoteController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -22,3 +24,21 @@ Route::controller(AuthController::class)->prefix('users/v1')->group(function () 
     Route::post('auth/refresh', 'refresh');
     Route::post('auth/logout', 'logout');
 });
+
+// Notes routes
+Route::controller(NoteController::class)->prefix('notes/v1')->group(function () {
+    Route::get('/public-notes', 'index');
+    Route::get('/user-notes', 'userNotes');
+    Route::post('/create', 'store');
+    Route::get('/show/{id}', 'show');
+    Route::post('/update/{id}', 'update');
+    Route::delete('/delete/{id}', 'destroy');
+});
+
+// Dashboard routes
+Route::controller(DashboardController::class)
+    ->prefix('dashboard/v1')
+    ->middleware(['role.check'])->group(function () {
+        Route::get('/clients/index', 'allClients');
+        Route::get('/clients/notes/index', 'allNotes');
+    });

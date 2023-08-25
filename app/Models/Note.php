@@ -2,32 +2,33 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-
 use App\Enums\UserRoleEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 use Spatie\Image\Exceptions\InvalidManipulation;
-use Spatie\Image\Manipulations;
-// use Laravel\Sanctum\HasApiTokens;
-use Tymon\JWTAuth\Contracts\JWTSubject;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\Image\Manipulations;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class User extends Authenticatable implements JWTSubject, HasMedia
+class Note extends Model implements HasMedia
 {
-    use HasFactory, Notifiable, InteractsWithMedia;
+    use HasFactory, InteractsWithMedia;
 
+    /**
+     * The relationships that should always be loaded.
+     *
+     * @var array
+     */
+    protected $with = ['media'];
     /**
      * The accessors to append to the model's array form.
      *
      * @var array
      */
     protected $appends = [
-        'has_media'
+        'author'
     ];
 
     /**
@@ -36,22 +37,9 @@ class User extends Authenticatable implements JWTSubject, HasMedia
      * @var array<int, string>
      */
     protected $fillable = [
-        'name',
-        'email',
-        'phoneNumber',
-        'registerBy',
-        'isActive',
-        'password',
-    ];
-
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
-    protected $hidden = [
-        'password',
-        'remember_token'
+        'subject',
+        'body',
+        'status'
     ];
 
     /**
@@ -60,43 +48,30 @@ class User extends Authenticatable implements JWTSubject, HasMedia
      * @var array<string, string>
      */
     protected $casts = [
-        'name' => 'string',
-        'email' => 'string',
-        'phoneNumber' => 'string',
-        'registerBy' => 'string',
-        'isActive' => 'boolean',
-        'role' => UserRoleEnum::class
+        'subject' => 'string',
+        'body' => 'string',
+        'status' => 'boolean'
     ];
 
     /**
-     * Set an encrypted password for the user.
+     * Get the note author .
      *
-     * @param  string  $value
-     * @return void
      */
-    public function setPasswordAttribute($value)
+    protected function getAuthorAttribute()
     {
-        $this->attributes['password'] = Hash::make($value);
+        if ($this->user->role === UserRoleEnum::ADMIN)
+            return 'admin';
+        else return 'client';
     }
 
     /**
-     * Get the identifier that will be stored in the subject claim of the JWT.
+     * Get the user that owns the note.
      *
-     * @return mixed
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
-    public function getJWTIdentifier()
+    public function user()
     {
-        return $this->getKey();
-    }
-
-    /**
-     * Return a key value array, containing any custom claims to be added to the JWT.
-     *
-     * @return array
-     */
-    public function getJWTCustomClaims()
-    {
-        return [];
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     /**
@@ -139,22 +114,5 @@ class User extends Authenticatable implements JWTSubject, HasMedia
     public function getThumbAttribute()
     {
         return $this->getFirstMediaUrl('thumb');
-    }
-
-    /**
-     * Add Media to api results
-     * @return bool
-     */
-    public function getHasMediaAttribute()
-    {
-        return $this->hasMedia('images') ? true : false;
-    }
-
-    /**
-     * Get the notes for the blog post.
-     */
-    public function notes()
-    {
-        return $this->hasMany(Note::class);
     }
 }
