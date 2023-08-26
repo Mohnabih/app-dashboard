@@ -1,0 +1,51 @@
+<?php
+
+namespace App\Jobs;
+
+use App\Enums\UserRoleEnum;
+use App\Models\Notification;
+use App\Models\User;
+use App\Notifications\SendNotification;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+
+class SendPrivateNotification implements ShouldQueue
+{
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    protected $notify_id, $user_id;
+    /**
+     * Create a new job instance.
+     * @param $notify_id
+     *
+     * @return void
+     */
+    public function __construct($notify_id, $user_id)
+    {
+        $this->notify_id = $notify_id;
+        $this->user_id = $user_id;
+    }
+
+    /**
+     * Execute the job.
+     *
+     * @return void
+     */
+    public function handle()
+    {
+        if ($notify = Notification::find($this->notify_id)) {
+            $user = User::find($this->user_id);
+
+            // Link between notification and the users
+            $notify->user()->attach($user->id);
+
+            // Sending Push Notifications by Using Firebase Cloud Messaging.
+            if ($user->fcm_token != null)
+                $user->notify(new SendNotification($notify));
+        }
+    }
+}

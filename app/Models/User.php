@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 
+use App\Enums\NotificationCatEnum;
 use App\Enums\UserRoleEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -42,6 +43,7 @@ class User extends Authenticatable implements JWTSubject, HasMedia
         'registerBy',
         'isActive',
         'password',
+        'fcm_token'
     ];
 
     /**
@@ -65,7 +67,8 @@ class User extends Authenticatable implements JWTSubject, HasMedia
         'phoneNumber' => 'string',
         'registerBy' => 'string',
         'isActive' => 'boolean',
-        'role' => UserRoleEnum::class
+        'role' => UserRoleEnum::class,
+        'fcm_token' => 'string'
     ];
 
     /**
@@ -97,6 +100,16 @@ class User extends Authenticatable implements JWTSubject, HasMedia
     public function getJWTCustomClaims()
     {
         return [];
+    }
+
+    /**
+     * Specifies the user's FCM token
+     *
+     * @return string|array
+     */
+    public function routeNotificationForFcm()
+    {
+        return $this->fcm_token;
     }
 
     /**
@@ -151,10 +164,20 @@ class User extends Authenticatable implements JWTSubject, HasMedia
     }
 
     /**
-     * Get the notes for the blog post.
+     * Get the notes for the user.
      */
     public function notes()
     {
         return $this->hasMany(Note::class);
+    }
+
+    /**
+     * The notification that belong to the user.
+     */
+    public function notifications()
+    {
+        return $this->belongsToMany(Notification::class)
+            ->withPivot(['isClicked', 'status'])
+            ->withTimestamps();;
     }
 }

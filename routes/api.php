@@ -3,6 +3,8 @@
 use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\Api\Dashboard\v1\DashboardController;
 use App\Http\Controllers\Api\Note\v1\NoteController;
+use App\Http\Controllers\Api\Notification\v1\ClientNotificationController;
+use App\Http\Controllers\Api\Notification\v1\NotificationController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -42,3 +44,23 @@ Route::controller(DashboardController::class)
         Route::get('/clients/index', 'allClients');
         Route::get('/clients/notes/index', 'allNotes');
     });
+
+// Notifications routes.
+Route::controller(NotificationController::class)
+    ->prefix('notifications/public/v1')
+    ->middleware(['role.check'])->group(
+        function () {
+            Route::get('/index', 'index');
+            Route::post('/create', 'store');
+            Route::delete('/delete/{id}', 'destroy');
+        }
+    );
+
+// Client notifications routes.
+Route::controller(ClientNotificationController::class)
+    ->prefix('notifications/private/v1')->group(
+        function () {
+            Route::get('/index', 'index');
+            Route::delete('/delete/{id}', 'destroy');
+        }
+    );
